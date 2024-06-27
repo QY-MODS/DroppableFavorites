@@ -1,15 +1,19 @@
 #include "Events.h"
 
+bool event_sinks_added = false;
+
 void OnMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
         // Start
     }
     if (message->type == SKSE::MessagingInterface::kNewGame || message->type == SKSE::MessagingInterface::kPostLoadGame) {
         // Post-load
+        if (event_sinks_added) return;
         auto* eventSink = myEventSink::GetSingleton();
         eventSink->UpdateKeyCodes();
         logger::info("Key codes: keyboard - {}, gamepad - {}", eventSink->key_keyboard, eventSink->key_gamepad);
         RE::BSInputDeviceManager::GetSingleton()->AddEventSink(eventSink);
+        event_sinks_added = true;
         logger::info("Event sinks added.");
     }
 }
