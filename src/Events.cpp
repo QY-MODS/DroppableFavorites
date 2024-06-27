@@ -33,10 +33,15 @@ inline const myEventTypes myEventSink::EventCheck(RE::InputEvent* event) {
     if (!a_event || !id_event) return myEventTypes::kNone;
     if (!a_event->IsUp()) return myEventTypes::kNone;
     if (auto* ui = RE::UI::GetSingleton(); !ui || !ui->IsMenuOpen(RE::FavoritesMenu::MENU_NAME)) return myEventTypes::kNone;
-    logger::trace("{}", id_event->userEvent.c_str());
-    if (id_event->userEvent != "Ready Weapon") return myEventTypes::kNone;
+    const auto key = a_event->idCode;
+    const auto device = a_event->device.get();
+    std::uint32_t drop_keycode = 0;
+    UpdateKeyCodes();
+    if (device == RE::INPUT_DEVICE::kKeyboard) drop_keycode = key_keyboard;
+	else if (device == RE::INPUT_DEVICE::kGamepad) drop_keycode = key_gamepad;
+    else return myEventTypes::kNone;
+    if (key != drop_keycode) return myEventTypes::kNone;
     const auto heldDuration = a_event->HeldDuration();
-    logger::trace("Ready Weapon");
     logger::trace("heldDuration: {}", heldDuration);
     return heldDuration > heldThreshold ? myEventTypes::kLong : myEventTypes::kSingle;
 }
@@ -58,4 +63,21 @@ inline const RE::FormID myEventSink::GetSelectedItem(const RE::FavoritesMenu::RU
     if constexpr (item->FORMTYPE == RE::FormType::Spell) return 0;
     logger::trace("item: {}", item->GetName());
     return item->GetFormID();
+}
+
+inline void myEventSink::UpdateKeyCodes() {
+    const auto controlMap = RE::ControlMap::GetSingleton();
+    const auto userEvents = RE::UserEvents::GetSingleton();
+    const auto new_key_keyboard = controlMap->GetMappedKey(userEvents->xButton, RE::INPUT_DEVICE::kKeyboard,
+                                                       RE::UserEvents::INPUT_CONTEXT_ID::kItemMenu);
+    const auto new_key_gamepad = controlMap->GetMappedKey(userEvents->xButton, RE::INPUT_DEVICE::kGamepad,
+                                                      RE::UserEvents::INPUT_CONTEXT_ID::kItemMenu);
+    if (new_key_keyboard != key_keyboard) {
+        logger::info("Key code for keyboard changed from {} to {}.", key_keyboard, new_key_keyboard);
+        key_keyboard = new_key_keyboard;
+    }
+    if (new_key_gamepad != key_gamepad) {
+		logger::info("Key code for gamepad changed from {} to {}.", key_gamepad, new_key_gamepad);
+        key_gamepad = new_key_gamepad;
+	}
 }

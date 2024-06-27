@@ -30,4 +30,7 @@ public:
         return &singleton;
     }
 
+    inline void UpdateKeyCodes();
+    std::uint32_t key_keyboard = 0;
+    std::uint32_t key_gamepad = 0;
 };
