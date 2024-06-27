@@ -1,4 +1,4 @@
-
+#include "Events.h"
 
 void OnMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
@@ -6,6 +6,9 @@ void OnMessage(SKSE::MessagingInterface::Message* message) {
     }
     if (message->type == SKSE::MessagingInterface::kNewGame || message->type == SKSE::MessagingInterface::kPostLoadGame) {
         // Post-load
+        auto* eventSink = myEventSink::GetSingleton();
+        RE::BSInputDeviceManager::GetSingleton()->AddEventSink(eventSink);
+        logger::info("Event sinks added.");
     }
 }
 
@@ -33,5 +36,6 @@ SKSEPluginLoad(const SKSE::LoadInterface *skse) {
     SetupLog();
     logger::info("Plugin loaded");
     SKSE::Init(skse);
+    SKSE::GetMessagingInterface()->RegisterListener(OnMessage);
     return true;
 }
